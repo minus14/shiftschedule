@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<!--[if IE 9]><html class="no-js ie9"><![endif]-->
+<!--[if gt IE 9]><!--><html class="no-js"><!--<![endif]-->
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+		<title>Schichtplan</title>
+		<link rel="shortcut icon" href="../favicon.ico"> 
+		<link rel="stylesheet" type="text/css" href="css/demo.css" />
+		<link rel="stylesheet" type="text/css" href="css/calendar.css" />
+		<link rel="stylesheet" type="text/css" href="css/custom_1.css" />
+		<link type="text/css" rel="stylesheet" href="uiAlertView/css/uiAlertView-1.0.0.css" />
+		<link rel="stylesheet" type="text/css" href="basictoast/jquery.basic.toast.css" />
+		<script src="js/modernizr.custom.63321.js"></script>
+		
+	</head>
+	<body>
+		<div id="spin"></div>
+		<div class="container">	
+
+			<div class="custom-calendar-wrap custom-calendar-full">
+				<div class="custom-header clearfix">
+					<h2>Schichtkalender <span>:-*</span>
+					</h2>
+					<h3 class="custom-month-year">
+						<span id="custom-month" class="custom-month"></span>
+						<span id="custom-year" class="custom-year"></span>
+						<nav>
+							<span id="custom-prev" class="custom-prev"></span>
+							<span id="custom-next" class="custom-next"></span>
+							<span id="custom-current" class="custom-current" title="Go to current date"></span>
+						</nav>
+					</h3>
+				</div>
+				<div id="calendar" class="fc-calendar-container"></div>
+			</div>
+		</div><!-- /container -->
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+		<script type="text/javascript" src="js/jquery.calendario.js"></script>
+		
+		<script type="text/javascript" src="basictoast/jquery.basic.toast.js"></script>
+		<script type="text/javascript" src="uiAlertView/js/jquery.uiAlertView-1.0.0.js"></script>
+		<script src="js/jquery.babypaunch.spinner.min.js"></script>
+		
+		<script type="text/javascript" src="js/constants.js"></script>
+		<script type="text/javascript">	
+			
+			var dict = {
+				'NIGHT' : HTML_NIGHT,
+				'EARLYEARLY' : HTML_EARLYEARLY,
+				'EARLYMID' : HTML_EARLYMID,
+				'WEEKENDEARLY' : HTML_WEEKENDEARLY,
+				'LATE' : HTML_LATE
+			}
+			
+			/*
+			var preloadedEvents = {};
+			
+			$.get("getdata.php", function(data, status){
+				for(var d in data)
+				{
+					if (typeof dict[data[d].shift] !== 'undefined')
+					{
+					preloadedEvents[(data[d].dateStr).toString()] = dict[data[d].shift];
+					}
+					//console.log(data[d].dateStr);						
+				}
+			});
+			*/
+			//console.log(preloadedEvents);
+			
+			$(function() {
+				$("#spin").spinner({
+					color: "black",
+					background: "rgba(255,255,255,0.5)",
+					//html: "<i class='fa fa-repeat' style='color: gray;'></i>",
+					spin: true
+				});
+				var cal = $( '#calendar' ).calendario( {		
+						onDayClick : function( $el, $contentEl, dateProperties ) {
+							
+							var dateStr =  dateProperties['month'].toString().padStart(2, '0')  + '-' + dateProperties['day'].toString().padStart(2, '0')  + '-' + dateProperties['year'];
+							//$.Toast(dateStr);
+							
+							var json = {
+								title: dateProperties['weekdayname'] + ', ' + dateProperties['day'].toString().padStart(2, '0') + '.' + dateProperties['month'].toString().padStart(2, '0') + '.' + dateProperties['year'],
+								//msg:"With several action buttons",
+								buttons:[
+									{ title:"Früh-Früh",color:COLOR_EARLYEARLY ,click:function(){
+										$("#spin").show();
+										
+										var evnt = {};
+										evnt[dateStr] = HTML_EARLYEARLY;
+										//cal.setData(evnt);	
+										$.ajax({
+										   url:"update.php",
+										   type:"POST",
+										   data:{dateStr:dateStr, shift:'EARLYEARLY'},
+										}).done(function(data){
+												cal.setData(evnt);
+												$("#spin").hide();
+												//$.Toast('Toast world. Jede Menge verdammt langer Text und so.', {'position': 'top', 'align': 'center'});
+												//console.log(data);
+												
+										}).fail(function(err){
+												var msg = err.statusText;
+												//console.log(err.statusText);
+												$("#spin").hide();
+												$.Toast("Fehler: " + msg, {'class': 'alert','position': 'top', 'align': 'center'});
+											});
+										} 
+									},
+									{ title:"Früh",color:COLOR_EARLYMID ,click:function(){
+										var evnt = {};
+										evnt[dateStr] = HTML_EARLYMID;
+										//cal.setData(evnt);	
+										$.ajax({
+										   url:"update.php",
+										   type:"POST",
+										   data:{dateStr:dateStr, shift:'EARLYMID'},
+										   success:function()
+										   {
+											cal.setData(evnt);
+										   }
+										  }) 
+										} 
+									},
+									{ title:"WE-Früh",color:COLOR_WEEKENDEARLY ,click:function(){
+										var evnt = {};
+										evnt[dateStr] = HTML_WEEKENDEARLY;
+										$.ajax({
+										   url:"update.php",
+										   type:"POST",
+										   data:{dateStr:dateStr, shift:'WEEKENDEARLY'},
+										   success:function()
+										   {
+											cal.setData(evnt);
+										   }
+										  })	
+										} 
+									},
+									{ title:"Spät",color:COLOR_LATE ,click:function(){
+										var evnt = {};
+										evnt[dateStr] = HTML_LATE;
+										$.ajax({
+										   url:"update.php",
+										   type:"POST",
+										   data:{dateStr:dateStr, shift:'LATE'},
+										   success:function()
+										   {
+											cal.setData(evnt);
+										   }
+										  })
+										} 
+									},
+									{ title:"Nacht",color:COLOR_NIGHT ,click:function(){
+										var evnt = {};
+										evnt[dateStr] = HTML_NIGHT;
+										
+										$.ajax({
+										   url:"update.php",
+										   type:"POST",
+										   data:{dateStr:dateStr, shift:'NIGHT'},
+										   success:function()
+										   {
+											cal.setData(evnt);
+											//alert("Added Successfully");
+										   },
+										   error:function()
+										   {
+											$.alertView("Alert Message");
+										   }
+										  })
+										} 
+									},
+									{ title:"Löschen",color:"red", click:function(){
+										var evnt = {};
+										evnt[dateStr] = ' ';
+										$.ajax({
+										   url:"update.php",
+										   type:"POST",
+										   data:{dateStr:dateStr, shift:' '},
+										   success:function()
+										   {
+											cal.setData(evnt);
+										   }
+										  })	
+										}  
+									},
+									{ title:"Abbrechen",color:"lightgrey"}
+								]
+							}
+						
+							$.alertView(json);
+
+						},
+						//caldata : preloadedEvents,
+						weeks : [ 'Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag' ],
+						weekabbrs : [ 'So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa' ],
+						months : [ 'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember' ],
+						monthabbrs : [ 'Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez' ],
+						fillEmpty: false,
+						checkUpdate: false
+					} ),
+					$month = $( '#custom-month' ).html( cal.getMonthName() ),
+					$year = $( '#custom-year' ).html( cal.getYear() );
+
+				
+				$.get("getdata.php", function(data, status){
+					for(var d in data)
+					{
+						if (typeof dict[data[d].shift] !== 'undefined')
+						{
+							//preloadedEvents[(data[d].dateStr).toString()] = dict[data[d].shift];
+							var evnt = {};
+							evnt[data[d].dateStr] = dict[data[d].shift];
+							cal.setData(evnt);
+							//console.log(evnt);
+						}
+						//console.log(data[d].dateStr);
+						
+					}
+				});
+				
+							
+				$( '#custom-next' ).on( 'click', function() {
+					cal.gotoNextMonth( updateMonthYear );
+				} );
+				$( '#custom-prev' ).on( 'click', function() {
+					cal.gotoPreviousMonth( updateMonthYear );
+				} );
+				$( '#custom-current' ).on( 'click', function() {
+					cal.gotoNow( updateMonthYear );
+				} );
+
+				function updateMonthYear() {				
+					$month.html( cal.getMonthName() );
+					$year.html( cal.getYear() );
+				}
+
+				// you can also add more data later on. As an example:
+				/*
+				someElement.on( 'click', function() {
+					
+					
+					// goes to a specific month/year
+					cal.goto( 3, 2013, updateMonthYear );
+
+				} );
+				*/
+			});
+		</script>
+	</body>
+</html>
